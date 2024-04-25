@@ -8,7 +8,7 @@ import MyMQTT
 import config as cfg
 from log2sqlite import fetch_logs_from_db,mqtt_listener,get_last_log
 
-VERSION = 'v1.0.0.20240418'
+VERSION = 'v1.0.0.20240424'
 
 mylogger=cfg.logger
 app = Flask(__name__,static_folder='static',static_url_path="/")
@@ -144,9 +144,9 @@ def reboot():
     payload=json.dumps({'act':'reboot','wait':wait})
     try:
         MyMQTT.publish(cfg.pub_topic, payload)
-        return "reboot action was sent successfully"
+        return jsonify({'code':0,'msg':'reboot action was sent successfully'})
     except Exception as e:
-        return "reboot action was sent failed,reason:{e}"
+        return jsonify({'code':1,'msg':f'reboot action was sent failed,reason:{e}'})
 
 @app.route("/get_last_log", methods=["GET"]) #取回最后一条日志
 def return_last_log():
@@ -166,11 +166,13 @@ def fetch_logs():
     end_time = datetime.datetime.now()
     start_time = end_time - datetime.timedelta(days=1)
     str_start_time=start_time.strftime('%Y-%m-%d %H:%M:%S')
-    str_end_time=end_time.strftime('%Y-%m-%d %H:%M:%S')
+    #str_end_time=end_time.strftime('%Y-%m-%d %H:%M:%S')
+    str_end_time = end_time.strftime('%Y-%m-%d')+" 23:59:59"
     str_start = request.args.get('start', str_start_time).replace('T', ' ')
     str_end = request.args.get('end', str_end_time).replace('T', ' ')
-    mylogger.info(f"{str_start=}, {str_end=}")
-    logs = fetch_logs_from_db(str_start, str_end)
+    exclude=request.args.get('exclude')
+    mylogger.info(f"{str_start=}, {str_end=} ,{exclude=}")
+    logs = fetch_logs_from_db(str_start, str_end, exclude)
     return render_template('logs.html', logs=logs, start_time=str_start, end_time=str_end,username=session['user'],version=VERSION, home_url=cfg.home_url)
 
 if __name__ == "__main__":
