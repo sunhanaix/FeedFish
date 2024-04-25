@@ -37,6 +37,8 @@
         <input type="datetime-local" id="start" name="start" placeholder="YYYY-MM-DD HH:MM:SS" value="{{ start_time }}">
         <label for="end">End Time:</label>
         <input type="datetime-local" id="end" name="end" placeholder="YYYY-MM-DD HH:MM:SS" value="{{ end_time }}">
+        <label for="exclude">排除心跳日志和查询日志:</label>
+        <input type="checkbox" id="exclude" name="exclude" checked>
         <button type="submit">Fetch Logs</button>
     </form>
     <table>
@@ -51,5 +53,29 @@
         </tr>
         {% endfor %}
     </table>
+ <script>
+        var intervalId; // 用于存储setInterval的ID，以便可以清除
+        function updateTime() {
+            var now = new Date(); // 获取当前UTC时间
+            now.setHours(now.getHours() + 8); // 将时间调整为UTC+8
+            var localDateTime = now.toISOString().substring(0, 19); // 转换格式为适合datetime-local输入
+            document.getElementById('end').value = localDateTime.replace('T',' '); // 把中间的‘T'去掉，然后更新时间
+            console.log(localDateTime);
+        }
+        function startUpdating() {
+            intervalId = setInterval(updateTime, 1000); // 每秒更新时间
+        }
+        function stopUpdating() {
+            clearInterval(intervalId); // 停止时间更新
+        }
+        // 绑定事件监听器
+        var endInput = document.getElementById('end');
+        //鼠标移入时停止更新时间
+        //endInput.addEventListener('mouseover', stopUpdating);
+        //鼠标移出时重新开始更新
+        //endInput.addEventListener('mouseout', startUpdating);
+        //startUpdating(); // 初始启动时间更新
+
+    </script>
 </body>
 </html>

@@ -115,7 +115,7 @@
 <h1>喂食器操作</h1>
 <div class="container">
     <button onclick="window.open('{{home_url}}/fetch_logs', '_blank');return false;">喂食器日志</button>
-    <button onclick="window.open('{{home_url}}/reboot?wait=1', '_blank');return false">重启喂食器</button>
+    <button onclick="try_reboot();return false">重启喂食器</button>
     <button class="button-update" onclick="get_info()">更多...</button>
 </div>
 
@@ -226,6 +226,12 @@
                 if (timeDiff > 2) { // 超过2分钟，显示黄色状态
                     $('#feeder-status').addClass('yellow').text('喂食器状态: 有可能离线');
                 } else {
+                    //要是logEntry信息中含有"action=reboot received"字样，那么也要显示黄色状态，不能是绿色状态
+                    if (logEntry.includes("action=reboot received")) {
+                        $('#feeder-status').addClass('yellow').text('喂食器状态: 重启中');
+                        $('#log-info').text(logEntry);
+                        return;;
+                    }
                     $('#feeder-status').addClass('green').text('喂食器状态: 在线');
                 }
 
@@ -260,6 +266,31 @@
 
     }
 
+    //定义一个try_reboot函数，用于尝试重启设备
+    function try_reboot() {
+        //把喂食器状态设置为黄色
+        $('#feeder-status').addClass('yellow').text('喂食器状态: 正在重启');
+        $('#log-info').text("正在重启中");
+        var rebootUrl = '{{home_url}}/reboot?wait=1';
+
+
+    $.ajax({
+        url: rebootUrl,
+        type: 'POST', // 或者 'GET' 根据实际接口需求
+        dataType: 'json', // 假设服务器返回 JSON 数据，根据实际情况调整
+        success: function(response) {
+            // 成功回调，处理服务器返回的数据或执行其他操作
+            console.log('Reboot request successful:', response);
+            // 根据服务器返回的数据进行相应处理，例如显示消息、更新界面等
+            // 如果有具体的业务逻辑，请在此处添加
+        },
+        error: function(xhr, status, error) {
+            // 失败回调，处理请求错误
+            console.error('Reboot request failed:', xhr.responseText, status, error);
+            // 显示错误消息、提示用户或进行其他异常处理
+        }
+    });
+    }
     function get_info() {
         $.ajax({
             url: '{{home_url}}/esp32_info',
