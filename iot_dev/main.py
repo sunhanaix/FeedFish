@@ -13,7 +13,7 @@ import gc
 import iot_config as cfg
 from pwm_servo import mov
 
-VERSION='1.1.20240419'
+VERSION='1.2.20240429'
 if sys.platform=='esp32': #要是esp32的话，降频节能
     machine.freq(80000000)
 gc.collect()
@@ -227,6 +227,6 @@ while True:
     except Exception as e:
         micropython.mem_info(1)
         f.mylog(f"in big loop,try except,reason:{e}")
-        raise
+        #raise
         machine.reset()
     time.sleep_ms(cfg.loop_interval_ms)
