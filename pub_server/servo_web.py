@@ -8,7 +8,7 @@ import MyMQTT
 import config as cfg
 from log2sqlite import fetch_logs_from_db,mqtt_listener,get_last_log
 
-VERSION = 'v1.0.0.20240424'
+VERSION = 'v1.1.0.20240427'
 
 mylogger=cfg.logger
 app = Flask(__name__,static_folder='static',static_url_path="/")
@@ -94,7 +94,7 @@ def esp32_info():
     return  jsonify({'code': 0, 'msg': 'get value ok', 'info': info,'config_data': config_data})
 
 # 路由处理更新配置请求
-@app.route("/update_config", methods=["POST"])
+@app.route("/update_config", methods=["GET","POST"])
 def update_config():
     if session.get("user"):
         mylogger.info(f"session user is: {session['user']}")
@@ -103,15 +103,19 @@ def update_config():
     steps = request.form.get('steps')
     crontabs = request.form.get('movements')
     mylogger.info(f"{steps=}, {crontabs=}")
-    new_config = f"steps={steps}\n" + crontabs
+    if steps is None:
+        return jsonify({'code': 1, 'msg': 'steps is None'})
+    if crontabs is None:
+        return jsonify({'code': 1, 'msg': 'crontabs is None'})
+    new_config = f"steps={steps}\n{crontabs}"
     mylogger.info(f"{new_config=}")
     # 通过MQTT发送更新后的配置至ESP32
     payload = json.dumps({'act': 'set_cfg', 'cfg_data': new_config})
     try:
         MyMQTT.publish(cfg.pub_topic, payload)
-        return "set_cfg action was sent successfully"
+        return jsonify({'code':0,'msg':'set_cfg action was sent successfully'})
     except Exception as e:
-        return "set_cfg action was sent failed,reason:{e}"
+        return jsonify({'code': 1, 'msg': f'set_cfg action was sent failed,reason:{e}'})
 
 
 @app.route("/do", methods=["GET"])
@@ -128,9 +132,9 @@ def do():
     payload=json.dumps({'act':'do','steps':steps,'wait':wait,'back_steps':back_steps})
     try:
         MyMQTT.publish(cfg.pub_topic, payload)
-        return "do action was sent successfully"
+        return jsonify({'code':0,'msg':'do action was sent successfully'})
     except Exception as e:
-        return "do action was sent failed,reason:{e}"
+        return jsonify({'code':1,'msg':f'do action was sent failed,reason:{e}'})
 
 @app.route("/reboot", methods=["GET"])
 def reboot():
