@@ -184,7 +184,7 @@
 <p/>
 
 <div class="container" id="crontab-info">
-    <form id="myForm" action="{{home_url}}/update_config" target="_blank" method="post">
+    <form id="myForm" action="{{home_url}}/update_config" target="_blank" method="POST">
         <div class="config-container">
             <label for="steps">初始步数（正转x步数，再反转回来，用于自检）:</label>
             <input type="number" id="steps" name="steps" value="{{ config['steps'] }}" required
@@ -230,7 +230,14 @@
                     if (logEntry.includes("action=reboot received")) {
                         $('#feeder-status').addClass('yellow').text('喂食器状态: 重启中');
                         $('#log-info').text(logEntry);
-                        return;;
+                        return;
+                        ;
+                    }
+                    if (logEntry.includes("action=set_cfg ")) {
+                        $('#feeder-status').addClass('yellow').text('喂食器状态: 配置更新后，重启中……');
+                        $('#log-info').text('喂食器状态: 配置更新后，重启中……');
+                        return;
+                        ;
                     }
                     $('#feeder-status').addClass('green').text('喂食器状态: 在线');
                 }
@@ -249,6 +256,7 @@
         updateStatus();
         setInterval(updateStatus, 30000); // 30000毫秒即30秒
     });
+
     function execute() {
         // 获取用户输入的值
         var forwardSteps = document.getElementById('forward-steps').value;
@@ -262,8 +270,26 @@
 
         // 使用window.location.href跳转到拼接后的URL
         //window.location.href = queryString; //本窗口打开跳转
-        window.open(queryString, '_blank'); //新窗口打开跳转
-
+        //window.open(queryString, '_blank'); //新窗口打开跳转
+        //用ajax去访问queryString，服务器端返回类似{'code':0,'msg':'do action was sent successfully'}这样响应信息
+        //如果code为0，则表示执行成功，否则表示执行失败，显示msg信息；对返回的code情况进行判断。
+        $.ajax({
+            url: queryString,
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                // 成功回调，处理服务器返回的数据或执行其他操作
+                console.log('Request successful:', response);
+                if (response.code == 0) {
+                    alert("投喂指令已发送")
+                } else {
+                    alert("投喂指令发送失败，" + response.msg)
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("投喂指令发送失败，" + error)
+            }
+        });
     }
 
     //定义一个try_reboot函数，用于尝试重启设备
@@ -273,24 +299,33 @@
         $('#log-info').text("正在重启中");
         var rebootUrl = '{{home_url}}/reboot?wait=1';
 
-
-    $.ajax({
-        url: rebootUrl,
-        type: 'POST', // 或者 'GET' 根据实际接口需求
-        dataType: 'json', // 假设服务器返回 JSON 数据，根据实际情况调整
-        success: function(response) {
-            // 成功回调，处理服务器返回的数据或执行其他操作
-            console.log('Reboot request successful:', response);
-            // 根据服务器返回的数据进行相应处理，例如显示消息、更新界面等
-            // 如果有具体的业务逻辑，请在此处添加
-        },
-        error: function(xhr, status, error) {
-            // 失败回调，处理请求错误
-            console.error('Reboot request failed:', xhr.responseText, status, error);
-            // 显示错误消息、提示用户或进行其他异常处理
-        }
-    });
+        $.ajax({
+            url: rebootUrl,
+            type: 'POST', // 或者 'GET' 根据实际接口需求
+            dataType: 'json', // 假设服务器返回 JSON 数据，根据实际情况调整
+            success: function (response) {
+                if (response.code == 0) {
+                    console.log("重启指令已发送");
+                    //更新喂食器状态为黄色
+                    $('#feeder-status').addClass('yellow').text('喂食器状态: 重启中');
+                    $('#log-info').text("重启中");
+                } else {
+                    alert("重启失败:"+response.msg);
+                    //更新喂食器状态为黄色
+                    $('#feeder-status').addClass('yellow').text('喂食器状态: 重启失败，状态未知');
+                    $('#log-info').text("重启失败，状态未知："+response.msg);
+                }
+            },
+            error: function (xhr, status, error) {
+                // 失败回调，处理请求错误
+                alert("重启失败"+error);
+                console.error('Reboot request failed:', xhr.responseText, status, error);
+                $('#feeder-status').addClass('yellow').text('喂食器状态: 重启失败，状态未知');
+                $('#log-info').text("重启失败，状态未知"+error);
+            }
+        });
     }
+
     function get_info() {
         $.ajax({
             url: '{{home_url}}/esp32_info',
@@ -409,7 +444,30 @@
         if (!validateCrontab()) {
             return false;
         }
-        document.getElementById('myForm').submit();
+        //document.getElementById('myForm').submit();
+        $.ajax({
+            url: '{{home_url}}/update_config',
+            type: 'POST',
+            data: {
+                steps: $('#steps').val(),
+                movements: $('#movements').val()
+            },
+            success: function (response) {
+                if (response.code === 0) {
+                    alert('配置成功');
+                    $('#feeder-status').addClass('yellow').text('喂食器状态: 配置成功，重启中');
+                    $('#log-info').text("更新喂食器配置指令已经下发，等待重启中");
+                }
+                else {
+                    alert('配置失败: ' + response.msg);
+                    $('#log-info').text("更新喂食器配置指令已经下发，等待重启中");
+                    $('#feeder-status').addClass('yellow').text('喂食器状态: 更新配置失败，状态未知中，等待刷新');
+                }
+            }
+            , error: function (xhr, status, error) {
+                alert('网络请求错误: ' + xhr.status + ' - ' + error);
+            }
+        });
     }
 </script>
 </body>
