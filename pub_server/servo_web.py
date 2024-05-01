@@ -8,7 +8,7 @@ import MyMQTT
 import config as cfg
 from log2sqlite import fetch_logs_from_db,mqtt_listener,get_last_log
 
-VERSION = 'v1.1.0.20240427'
+VERSION = 'v1.2.0.20240501'
 
 mylogger=cfg.logger
 app = Flask(__name__,static_folder='static',static_url_path="/")
@@ -77,20 +77,19 @@ def esp32_info():
         return jsonify({'code': 1, 'msg': 'can not MyMQTT.pull_iot_value'})
     info = {}
     config_data = {}
-    #下面是正常返回信息
-    info['ssid']=esp32_info['ssid']
-    info['rssi']=esp32_info['rssi']
-    info['mac']=esp32_info['mac']
-    info['ip']=esp32_info['ip']
-    info['model']=esp32_info['model']
-    info['version']=esp32_info['version']
-    info['client_id']=esp32_info['client_id']
-    info['uptime'] = esp32_info['uptime']
-    info['now_time'] = esp32_info['now_time']
-    config_data['steps']=esp32_info['cfg_data'].split('\n')[0].split('steps=')[-1].lstrip().rstrip()
-    config_data['crontabs'] = "\n".join(esp32_info['cfg_data'].split('\n')[1:])
-    config_data['crontabs']=config_data['crontabs'].lstrip().rstrip()
-    mylogger.info(f"{config_data['crontabs']=}")
+    steps=None
+    for k in esp32_info:
+        if k=='cfg_data':
+            config_data['steps'] = esp32_info['cfg_data'].split('\n')[0].split('steps=')[-1].lstrip().rstrip()
+            config_data['crontabs'] = "\n".join(esp32_info['cfg_data'].split('\n')[1:])
+            config_data['crontabs'] = config_data['crontabs'].lstrip().rstrip()
+            continue
+        #除了前面的steps和crontabs，其他都直接赋值给info了
+        info[k]=esp32_info[k]
+
+    mylogger.info(f"{esp32_info=}")
+    mylogger.info(f"{info=}")
+    mylogger.info(f"{steps=},{config_data=}")
     return  jsonify({'code': 0, 'msg': 'get value ok', 'info': info,'config_data': config_data})
 
 # 路由处理更新配置请求
