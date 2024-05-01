@@ -21,6 +21,11 @@ mqtt_update_interval=60*1000  #往mqtt server发送数据的间隔，此处设�
 file_piece_size=704 #704是44*16块，实测，python源码704时，base64编码后大小是936字节，接近1k
 
 moto_pin=13 #把舵机接在D13引脚上
+moto_pin=13 #把伺服电机接在D13引脚上
+hx711_dt=15 #把hx711称重模块的dt引脚接在ESP32的D15引脚上
+hx711_sck=2 #把hx711称重模块的sck引脚接在ESP32的D2引脚上
+hx711_rate=82.96 #hx711重量对应读数的斜率值；也即是(当前读数-初始offset）/rate，就是重量克数了
+hx711_offset=-129592+180*hx711_rate #hx711空载读数，外卖盒子以及里面esp32和舵机等重180g
 
 ntp_retry=20 #最多尝试5次来获得ntp时间
 wifi_retry=6 #最多尝试5次来连接wifi
