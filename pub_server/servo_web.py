@@ -3,12 +3,13 @@ import os,sys,re,json,time
 from flask import Flask, render_template, request, Response, session, make_response, send_from_directory, jsonify, redirect
 import datetime
 import random,threading
+import pandas as pd
 import MyDB
 import MyMQTT
 import config as cfg
-from log2sqlite import fetch_logs_from_db,mqtt_listener,get_last_log
+from log2sqlite import fetch_logs_from_db,mqtt_listener,get_last_log, get_weight_data_fr_db
 
-VERSION = 'v1.2.0.20240501'
+VERSION = 'v1.3.0.20240507'
 
 mylogger=cfg.logger
 app = Flask(__name__,static_folder='static',static_url_path="/")
@@ -64,7 +65,7 @@ def index():
 
     info = {}
     config_data = {}
-    return render_template("index.html",username=session['user'],version=VERSION, info=info,config=config_data,home_url=cfg.home_url)
+    return render_template("index.html",username=session['user'],version=VERSION, info=info,config=config_data,home_url=cfg.home_url,steps=cfg.steps,wait=cfg.wait,back_steps=cfg.back_steps)
 
 @app.route("/esp32_info", methods=["GET"])
 def esp32_info():
@@ -177,6 +178,40 @@ def fetch_logs():
     mylogger.info(f"{str_start=}, {str_end=} ,{exclude=}")
     logs = fetch_logs_from_db(str_start, str_end, exclude)
     return render_template('logs.html', logs=logs, start_time=str_start, end_time=str_end,username=session['user'],version=VERSION, home_url=cfg.home_url)
+
+@app.route('/get_weight_curve') #取回给定时间段内的日志中的weight的数据，并展示绘图页面
+def get_weight_curve():
+    if session.get("user"):
+        mylogger.info(f"session user is: {session['user']}")
+    else:
+        return redirect(cfg.home_url)
+    end_time = datetime.datetime.now()
+    start_time = end_time - datetime.timedelta(days=1)
+    str_start_time=start_time.strftime('%Y-%m-%d %H:%M:%S')
+    #str_end_time=end_time.strftime('%Y-%m-%d %H:%M:%S')
+    str_end_time = end_time.strftime('%Y-%m-%d')+" 23:59:59"
+    str_start = request.args.get('start', str_start_time).replace('T', ' ')
+    str_end = request.args.get('end', str_end_time).replace('T', ' ')
+    mylogger.info(f"{str_start=}, {str_end=} ")
+    return render_template('weight_curve.html', start_time=str_start, end_time=str_end,username=session['user'],version=VERSION, home_url=cfg.home_url)
+
+@app.route('/get_weight_data') #取回给定时间段内的日志中的weight的数据
+def get_weight_data():
+    if session.get("user"):
+        mylogger.info(f"session user is: {session['user']}")
+    else:
+        return redirect(cfg.home_url)
+    end_time = datetime.datetime.now()
+    start_time = end_time - datetime.timedelta(days=1)
+    str_start_time=start_time.strftime('%Y-%m-%d %H:%M:%S')
+    #str_end_time=end_time.strftime('%Y-%m-%d %H:%M:%S')
+    str_end_time = end_time.strftime('%Y-%m-%d')+" 23:59:59"
+    str_start = request.args.get('start', str_start_time).replace('T', ' ')
+    str_end = request.args.get('end', str_end_time).replace('T', ' ')
+    mylogger.info(f"{str_start=}, {str_end=} ")
+    weight_data = get_weight_data_fr_db(str_start, str_end)
+    print("weight_data=",weight_data)
+    return jsonify(weight_data)
 
 if __name__ == "__main__":
     mylogger.info("启动MQTT消息监听线程")

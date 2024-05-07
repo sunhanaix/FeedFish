@@ -4,6 +4,7 @@ import sqlite3
 import MyMQTT
 import config as cfg
 from datetime import datetime, timedelta
+import pandas as pd
 
 mylogger=cfg.logger
 # 创建或连接SQLite数据库
@@ -31,7 +32,7 @@ def insert_log(message):
     conn.close()
 
 #给定起始时间和结束时间，返回数据库中该时间范围内的日志
-def fetch_logs_from_db(start_time, end_time):
+def fetch_logs_from_db(start_time, end_time,exclude='on'):
     # 确保时间格式正确，这里假设时间以字符串形式提供，格式为'YYYY-MM-DD HH:MM:SS'
     try:
         datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
@@ -42,7 +43,14 @@ def fetch_logs_from_db(start_time, end_time):
     conn = sqlite3.connect(cfg.log_db)
     cursor = conn.cursor()
     # 查询指定时间段的日志
-    cursor.execute("SELECT message, timestamp FROM logs WHERE timestamp BETWEEN ? AND ?", (start_time, end_time))
+    sql=''
+    if exclude=='on':
+        sql="SELECT message, timestamp FROM logs WHERE timestamp BETWEEN ? AND ? AND message NOT LIKE '%action=heartbeat%' and message NOT LIKE '%action=query%' order by timestamp desc"
+
+    else:
+        sql="SELECT message, timestamp FROM logs WHERE timestamp BETWEEN ? AND ? order by timestamp desc"
+    mylogger.info(f"sql={sql}")
+    cursor.execute(sql, (start_time, end_time))
     logs = cursor.fetchall()
     conn.close()
     return logs
@@ -54,6 +62,28 @@ def get_last_log():
     log = cursor.fetchone()
     conn.close()
     return log
+
+def get_weight_data_fr_db(start_time, end_time):
+    # 连接到SQLite数据库
+    conn = sqlite3.connect(cfg.log_db)
+    cursor = conn.cursor()
+    # 查询指定时间范围内所有包含"weight"字样的记录
+    cursor.execute("SELECT timestamp,message FROM logs WHERE timestamp BETWEEN ? AND ? AND message LIKE '%weight%'", (start_time, end_time))
+    # 提取数据并保存到DataFrame中
+    data = cursor.fetchall()
+    df = pd.DataFrame(data, columns=['timestamp', 'message'])
+    # 使用正则表达式提取weight数值
+    weight_data = []
+    for index, row in df.iterrows():
+        timestamp = row['timestamp']
+        weight_match = re.search(r'weight\D+(\d+\.\d+)', row['message'])
+        if weight_match:
+            weight = float(weight_match.group(1))
+            weight_data.append({'timestamp': timestamp, 'weight': weight})
+    # 关闭数据库连接
+    conn.close()
+    return weight_data
+
 
 class SubMsg(MyMQTT.SubRespone): #继承MyMQTT.SubRespone响应类，重写sub_all和on_message方法
     def sub_all(self): #订阅哪些主题进行配置
