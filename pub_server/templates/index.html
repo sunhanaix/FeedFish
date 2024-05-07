@@ -115,6 +115,7 @@
 <h1>喂食器操作</h1>
 <div class="container">
     <button onclick="window.open('{{home_url}}/fetch_logs', '_blank');return false;">喂食器日志</button>
+    <button onclick="window.open('{{home_url}}/get_weight_curve', '_blank');return false;">重量变化情况</button>
     <button onclick="try_reboot();return false">重启喂食器</button>
     <button class="button-update" onclick="get_info()">更多...</button>
 </div>
@@ -124,15 +125,15 @@
     <h2>手工喂食</h2>
     <div class="form-group">
         <label for="forward-steps">向前转动步数：</label>
-        <input type="number" id="forward-steps" placeholder="输入步数" value="900">
+        <input type="number" id="forward-steps" placeholder="输入步数" value="{{steps}}">
     </div>
     <div class="form-group">
         <label for="wait-time">等待秒数：</label>
-        <input type="number" id="wait-time" placeholder="输入秒数" value="2">
+        <input type="number" id="wait-time" placeholder="输入秒数" value="{{wait}}">
     </div>
     <div class="form-group">
         <label for="backward-steps">往回转动步数：</label>
-        <input type="number" id="backward-steps" placeholder="输入步数" value="900">
+        <input type="number" id="backward-steps" placeholder="输入步数" value="{{back_steps}}">
     </div>
     <button onclick="execute();return false;">执行喂食操作</button>
 

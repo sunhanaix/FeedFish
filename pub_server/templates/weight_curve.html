@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重量曲线绘制</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        form { margin-bottom: 20px; }
+        input[type="text"], button { padding: 10px; }
+        .user-logout {
+            display: flex; /* 启用Flexbox布局 */
+            justify-content: flex-end; /* 将内容对齐到容器的右侧 */
+            align-items: center; /* 垂直居中对齐 */
+        }
+
+        .user-logout h2 {
+            display: flex; /* 允许h2标签内部的元素进行Flex布局 */
+            align-items: center; /* 垂直居中对齐 */
+        }
+
+        .user-logout a {
+            margin-left: 10px; /* 为链接添加一些左边距，以便与用户名分隔开 */
+        }
+    </style>
+</head>
+<body>
+    <h1>重量变化</h1>
+    <div class="user-logout">
+    <h2><i class="fa fa-star"></i>{{username}}(<a href="?logout=1">logout</a>)  {{version}}</h2>
+</div>
+    <form action="{{home_url}}/get_weight_data" method="get">
+        <label for="start">Start Time:</label>
+        <input type="datetime-local" id="start" name="start" placeholder="YYYY-MM-DD HH:MM:SS" value="{{ start_time }}">
+        <label for="end">End Time:</label>
+        <input type="datetime-local" id="end" name="end" placeholder="YYYY-MM-DD HH:MM:SS" value="{{ end_time }}">
+        <button type="button" onclick="fetchData()">获取数据并画图</button>
+    </form>
+    <canvas id="weightChart" width="800" height="400"></canvas>
+    <table id="weight_data">
+        <tr>
+            <th>Timestamp</th>
+            <th>Weight</th>
+        </tr>
+    </table>
+<script>
+        $(document).ready(function() {
+                fetchData();  // Fetch data and initialize chart and table on page load
+        });
+        function fetchData() {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+
+            $.ajax({
+                url: '{{ home_url }}/get_weight_data',
+                type: 'GET',
+                data: { start: start, end: end },
+                success: function(response) {
+                    updateTable(response);
+                    updateChart(response);
+                }
+            });
+        }
+
+        function updateTable(data) {
+            var table = document.getElementById('weight_data');
+            // Clear previous rows, except the header
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            //console.log(data);
+            data.forEach(function(item) {
+                var row = table.insertRow();
+                var timestampCell = row.insertCell(0);
+                timestampCell.textContent = item.timestamp;
+                var weightCell = row.insertCell(1);
+                weightCell.textContent = item.weight;
+            });
+        }
+
+        function updateChart(data) {
+        var ctx = document.getElementById('weightChart').getContext('2d');
+        if (window.weightChart) {
+            if (typeof window.weightChart.destroy === 'function') {
+                window.weightChart.destroy(); // Only destroy if it is a function
+            }
+        }
+        window.weightChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(item => item.timestamp),
+                datasets: [{
+                    label: 'Weight',
+                    data: data.map(item => item.weight),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
