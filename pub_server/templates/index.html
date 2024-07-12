@@ -124,16 +124,16 @@
 <div class="container">
     <h2>手工喂食</h2>
     <div class="form-group">
-        <label for="forward-steps">向前转动步数：</label>
-        <input type="number" id="forward-steps" placeholder="输入步数" value="{{steps}}">
+        <label for="forward-steps">向前转动度数：</label>
+        <input type="number" id="forward-steps" placeholder="输入度数" value="{{steps}}">
     </div>
     <div class="form-group">
         <label for="wait-time">等待秒数：</label>
         <input type="number" id="wait-time" placeholder="输入秒数" value="{{wait}}">
     </div>
     <div class="form-group">
-        <label for="backward-steps">往回转动步数：</label>
-        <input type="number" id="backward-steps" placeholder="输入步数" value="{{back_steps}}">
+        <label for="backward-steps">往回转动度数：</label>
+        <input type="number" id="backward-steps" placeholder="输入度数" value="{{back_steps}}">
     </div>
     <button onclick="execute();return false;">执行喂食操作</button>
 
@@ -187,7 +187,7 @@
 <div class="container" id="crontab-info">
     <form id="myForm" action="{{home_url}}/update_config" target="_blank" method="POST">
         <div class="config-container">
-            <label for="steps">初始步数（正转x步数，再反转回来，用于自检）:</label>
+            <label for="steps">初始度数（正转x度数，再反转回来，用于自检）:</label>
             <input type="number" id="steps" name="steps" value="{{ config['steps'] }}" required
                    style="width:60px; height:20px;"/>
         </div>
@@ -336,7 +336,7 @@
                 if (response.code === 0) {
                     var configData = response.config_data;
                     var info = response.info;
-                    // 更新步数和运动计划
+                    // 更新度数和运动计划
                     $('#steps').val(configData.steps);
                     $('#movements').text(configData.crontabs);
 

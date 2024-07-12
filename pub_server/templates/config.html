@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>更新设置</title>
+    <style>
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select, button {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            margin-left: 10px; /* 添加左边距，与文本有一定的间隔 */
+            padding: 5px; /* 添加内边距 */
+        }
+
+        .config-container {
+            display: flex;
+            align-items: center; /* 垂直居中对齐 */
+            margin-bottom: 10px; /* 添加一些底部外边距 */
+        }
+
+        table {
+            border-collapse: collapse; /* 折叠边框，使之更加紧凑 */
+            width: 100%; /* 可选，使表格宽度适应容器 */
+        }
+
+        /* 添加样式规则给表格内的单元格 */
+        th, td {
+            border: 1px solid black; /* 设置1px宽的实线边框 */
+            text-align: left; /* 可选，设置文本对齐方式 */
+            padding: 8px; /* 可选，设置内边距 */
+        }
+
+        /* 可选，添加一些样式给表头 */
+        th {
+            background-color: #f2f2f2; /* 设置表头背景颜色 */
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .button-update {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .user-logout {
+            display: flex; /* 启用Flexbox布局 */
+            justify-content: flex-end; /* 将内容对齐到容器的右侧 */
+            align-items: center; /* 垂直居中对齐 */
+        }
+
+        .user-logout h2 {
+            display: flex; /* 允许h2标签内部的元素进行Flex布局 */
+            align-items: center; /* 垂直居中对齐 */
+        }
+
+        .user-logout a {
+            margin-left: 10px; /* 为链接添加一些左边距，以便与用户名分隔开 */
+        }
+    </style>
+    <script>
+        function formatTextArea() {
+            var text = document.getElementById('movements').value;
+            // 去掉空行
+            text = text.replace(/^\s*[\r\n]/gm, '');
+            // 获取textarea的值，并按行分割
+            var lines = text.split('\n');
+
+            // 初始化一个数组来存储处理后的行
+            var formattedLines = [];
+
+            // 遍历每一行
+            for (var i = 0; i < lines.length; i++) {
+                // 去除首尾空白字符
+                var line = lines[i].trim();
+                //判断line如果是空行，则跳过
+                if (line === '') {
+                    continue;
+                }
+                // 将处理后的行添加到formattedLines数组中
+                formattedLines.push(line);
+            }
+
+            // 将处理后的行重新组合成一个字符串，并设置到textarea中
+            document.getElementById('movements').value = formattedLines.join('\n');
+        }
+
+        function validateCrontab() {
+            var movements = document.getElementById('movements').value;
+            var lines = movements.split('\n');
+            var isValid = true;
+
+            // 正则表达式，用于匹配每一列的合法值或*
+            var minuteRegex = /^([0-5]?[0-9]|[*])$/;
+            var hourRegex = /^(([0-1]?[0-9])|2[0-3]|[*])$/;
+            var dayRegex = /^([0-2]?[0-9]|3[0-1]|[*])$/;
+            var monthRegex = /^([0-1]?[0-9]|12|[*])$/;
+            var weekdayRegex = /^([0-7]|[*])$/;
+            // 函数名称可以包含字母、数字、下划线和短横线
+            var functionNameRegex = /^[a-zA-Z0-9_-]*$/;
+
+            // 遍历每一行
+            for (var i = 0; i < lines.length; i++) {
+                var fields = lines[i].split(/\s+/);
+                // 检查字段数量是否正确，至少应该有7列
+                if (fields.length < 6) {
+                    alert('行 ' + (i + 1) + ' 格式错误，缺少字段。');
+                    isValid = false;
+                    break;
+                }
+
+                // 检查前五列为合法值或*
+                if (!minuteRegex.test(fields[0]) || !hourRegex.test(fields[1]) ||
+                    !dayRegex.test(fields[2]) || !monthRegex.test(fields[3]) ||
+                    !weekdayRegex.test(fields[4])) {
+                    alert('行 ' + (i + 1) + ' 格式错误，分钟、小时、日期、月份或星期几的值不合法。');
+                    isValid = false;
+                    break;
+                }
+
+                // 检查函数名称是否合法
+                if (!functionNameRegex.test(fields[5])) {
+                    alert('行 ' + (i + 1) + ' 格式错误，函数名称包含非法字符。');
+                    isValid = false;
+                    break;
+                }
+
+                // 可选的特殊字符检查，这里假设不允许特殊字符
+                var specialCharactersRegex = /[^0-9 a-zA-Z_-]/;
+                for (var j = 0; j < fields.length; j++) {
+                    if (fields[j] !== '*' && specialCharactersRegex.test(fields[j])) {
+                        alert('行 ' + (i + 1) + ' 包含特殊字符。');
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (!isValid) break;
+            }
+
+            return isValid;
+        }
+
+    </script>
+
+</head>
+<body>
+<div class="user-logout">
+    <h2><i class="fa fa-star"></i>{{username}}(<a href="?logout=1">logout</a>)  {{version}}</h2>
+</div>
+<div class="container">
+    <button class="button-update" onclick="location.reload()">刷新信息和计划任务配置信息</button>
+</div>
+<div class="container">
+    <h2>当前设备配置情况</h2>
+    <form action="{{home_url}}/update_config" method="post">
+        <div class="info-container">
+            <table boder="1">
+                <tr>
+                    <td>ssid</td>
+                    <td>{{ info['ssid'] }}</td>
+                </tr>
+                <tr>
+                    <td>rssi</td>
+                    <td>{{ info['rssi'] }}</td>
+                </tr>
+                <tr>
+                    <td>ip</td>
+                    <td>{{ info['ip'] }}</td>
+                </tr>
+                <tr>
+                    <td>mac</td>
+                    <td>{{ info['mac'] }}</td>
+                </tr>
+                <tr>
+                    <td>model</td>
+                    <td>{{ info['model'] }}</td>
+                </tr>
+                <tr>
+                    <td>version</td>
+                    <td>{{ info['version'] }}</td>
+                </tr>
+                <tr>
+                    <td>client_id</td>
+                    <td>{{ info['client_id'] }}</td>
+                </tr>
+                <tr>
+                    <td>uptime</td>
+                    <td>{{ info['uptime'] }}</td>
+                </tr>
+                <tr>
+                    <td>now_time</td>
+                    <td>{{ info['now_time'] }}</td>
+                </tr>
+            </table>
+        </div>
+</div>
+<p/>
+
+<div class="container">
+    <h2>当前设备配置情况</h2>
+    <div class="config-container">
+        <label for="steps">初始度数（正转x度数，再反转回来，用于自检）:</label>
+        <input type="number" id="steps" name="steps" value="{{ config['steps'] }}" required
+               style="width:60px; height:20px;"/>
+    </div>
+    <h2>当前设备计划任务信息</h2>
+    <textarea id="movements" name="movements" rows="10" cols="50" required>
+{{ config['crontabs'] }}</textarea>
+    </p>
+    <button type="button" onclick="formatTextArea()">整理文本</button>
+    <button type="button" onclick="validateCrontab()">校验设置</button>
+    <button type="submit" onclick="return validateCrontab()">提交更新</button>
+</div>
+</form>
+
+</body>
+</html>
