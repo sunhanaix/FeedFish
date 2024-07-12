@@ -48,9 +48,9 @@ def act_ask_data(client,topic,msg,VERSION,wifi_info):#收到/xx/xx/ask_data时�
         time.sleep(wait)
         machine.reset()
     elif act=='do' or act=='mov': #要是请求旋转舵机，那就操作舵机
-        steps=json_data.get('steps',900) #获得旋转舵机角度后，默认900
+        steps=json_data.get('steps',180) #获得旋转舵机角度后，默认180度
         wait=json_data.get('wait',2) #获得旋转舵机旋转步数后，等待几秒，默认2秒
-        back_steps=json_data.get('back_steps',900) #获得旋转舵机角度后，默认900
+        back_steps=json_data.get('back_steps',0) #获得旋转舵机角度后，默认0度
         f.mylog(f"act={act},steps={steps},wait={wait},back_steps={back_steps}")
         mov(steps,wait,back_steps)
         client.publish(cfg.log_topic, f'{f.now()} action={act} received , mov({steps},{wait},{back_steps})'.encode()) #前面执行完舵机后，把执行信息做下记录发给服务器

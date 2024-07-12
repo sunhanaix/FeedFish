@@ -12,8 +12,9 @@ import umqtt.simple
 import gc
 import iot_config as cfg
 from pwm_servo import mov
+from hx711 import Scales
 
-VERSION='1.2.20240429'
+VERSION='1.4.20240711'
 if sys.platform=='esp32': #要是esp32的话，降频节能
     machine.freq(80000000)
 gc.collect()
@@ -69,7 +70,7 @@ except Exception as e:
 steps=cfg_data.split("\n")[0].split('steps=')[-1]
 steps=int(steps)
 try:
-    mov(steps,2,steps) #初始化自检下，进行旋转检测下
+    mov(steps,2,0) #初始化自检下，进行旋转检测下，然后返回0度
 except Exception as e:
     print(f"ERROR when POST servo moto,reason:{e}")
     machine.reset()
@@ -198,6 +199,9 @@ while True:
         if time_ms_counter>=cfg.mqtt_update_interval:
             i+=1
             check_and_reconnect_mqtt() #检查是否mqtt的连接还在，不在的话，再重新连接下
+            w=Scales(d_out=cfg.hx711_dt,pd_sck=cfg.hx711_sck)
+            weight=w.stable_weight()
+            wifi_info['weight']=weight
             client.publish(cfg.log_topic, f'{f.now()} action=heartbeat ,{wifi_info}'.encode()) 
             f.mylog(f"No.{i}, free_mem={gc.mem_free()},and sleep_ms {cfg.mqtt_update_interval}")
             time_ms_counter=0
