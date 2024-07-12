@@ -20,6 +20,11 @@ bemfa_topics=['FeedFish001',] #这个要提前在巴法云上创建一个MQTT设
 bemfa_id='52dab87befc5409e91ac76f912345678'
 enable_bemfa=True #是否开启巴法云支持
 
+#给到html页面里面一次舵机动作的默认值
+steps=180 #舵机正转转动的度数
+wait=2 #舵机正转后等待的秒数
+back_steps=0 #舵机反转转动的度数
+
 loop_interval_ms=1000 #循环里面，间隔检测mqtt msg的间隔
 mqtt_update_interval=60*1000  #往mqtt server发送数据的间隔，此处设置没60000ms（60s）一次
 file_piece_size=704 #704是44*16块，实测，python源码704时，base64编码后大小是936字节，接近1k
