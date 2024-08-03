@@ -1,6 +1,7 @@
 from machine import PWM,Pin
 import time
 import iot_config as cfg
+pwm= PWM(Pin(cfg.moto_pin, Pin.OUT),freq=50)
 
 '''
 MG995舵机的中点位置是1500微秒（usec），
@@ -55,16 +56,12 @@ def set_angle(angle):
     #2.5ms--180度
     if angle <0 or angle >180:
         return
-    pwm= PWM(Pin(cfg.moto_pin, Pin.OUT))  # 使用GPIO13
-    pwm.freq(50)
-    pwm.duty_ns(0)  # 发送停止信号
     time.sleep(0.5)  # 等待舵机反应
     #把角度(0-180度的角度）映射到ms范围
     ns=int(angle/(180/(2500000-500000))+500000)
     print(f"{ns=}")
     pwm.duty_ns(ns)
-    time.sleep(0.5) # 等待舵机反应
-    pwm.deinit()
+    time.sleep(0.5) # 等待舵机反应    
 
 def mov(angle1,wait,angle2):
     #正转到angle1度，等wait秒，再转到angle1度

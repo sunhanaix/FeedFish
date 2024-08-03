@@ -14,7 +14,7 @@ import iot_config as cfg
 from pwm_servo import mov
 from hx711 import Scales
 
-VERSION='1.4.20240711'
+VERSION='1.6.20240803'
 if sys.platform=='esp32': #要是esp32的话，降频节能
     machine.freq(80000000)
 gc.collect()
@@ -24,13 +24,13 @@ gc.collect()
 class timeout_socket(umqtt.simple.socket.socket):
     def __init__(self):
         super().__init__()
-        self.settimeout(5)
+        self.settimeout(10)
 
     def setblocking(self, flag):
         # "setblocking()" está documentado como
         # variantes de "settimeout()".
         # https://docs.micropython.org/en/latest/esp8266/library/usocket.html#usocket.socket.setblocking
-        timeout = 5 if flag else 0
+        timeout = 10 if flag else 0
         self.settimeout(timeout)
 
 class timeout_socket_module:
@@ -199,8 +199,11 @@ while True:
         if time_ms_counter>=cfg.mqtt_update_interval:
             i+=1
             check_and_reconnect_mqtt() #检查是否mqtt的连接还在，不在的话，再重新连接下
-            w=Scales(d_out=cfg.hx711_dt,pd_sck=cfg.hx711_sck)
-            weight=w.stable_weight()
+            w=None
+            weight=0
+            if cfg.enable_hx711:
+                w=Scales(d_out=cfg.hx711_dt,pd_sck=cfg.hx711_sck)
+                weight=w.stable_weight()
             wifi_info['weight']=weight
             client.publish(cfg.log_topic, f'{f.now()} action=heartbeat ,{wifi_info}'.encode()) 
             f.mylog(f"No.{i}, free_mem={gc.mem_free()},and sleep_ms {cfg.mqtt_update_interval}")

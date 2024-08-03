@@ -30,8 +30,11 @@ def act_ask_data(client,topic,msg,VERSION,wifi_info):#收到/xx/xx/ask_data时�
         data['rssi']=wifi_info.get('rssi')
         data['uptime']=wifi_info.get('uptime')
         data['now_time']=f.now()
-        w=Scales(d_out=cfg.hx711_dt,pd_sck=cfg.hx711_sck)
-        weight=w.stable_weight()
+        w=None
+        weight=0
+        if cfg.enable_hx711:
+            w=Scales(d_out=cfg.hx711_dt,pd_sck=cfg.hx711_sck)
+            weight=w.stable_weight()
         data['weight']=weight
         #micropython.mem_info(1)
         cfg_data=open('config.ini','r',encoding='utf8').read()
