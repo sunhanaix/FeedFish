@@ -22,6 +22,7 @@ file_piece_size=704 #704是44*16块，实测，python源码704时，base64编码
 
 moto_pin=13 #把舵机接在D13引脚上
 moto_pin=13 #把伺服电机接在D13引脚上
+enable_hx711=False #是否启用称重模块
 hx711_dt=15 #把hx711称重模块的dt引脚接在ESP32的D15引脚上
 hx711_sck=2 #把hx711称重模块的sck引脚接在ESP32的D2引脚上
 hx711_rate=82.96 #hx711重量对应读数的斜率值；也即是(当前读数-初始offset）/rate，就是重量克数了
